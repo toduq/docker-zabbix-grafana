@@ -16,8 +16,12 @@ RUN \
     php-bcmath \
     php-mbstring \
     php-xml \
+    adduser \
+    libfontconfig \
     monit && \
-  rm -rf /var/lib/apt/lists/*
+  wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.1-1484211277_amd64.deb && \
+  dpkg -i grafana_4.1.1-1484211277_amd64.deb && \
+  apt-get clean && rm -rf /var/cache/apt/archives/* /var/lib/apt/lists/*
 
 COPY start.sh migrate.sh /root/
 COPY monitrc /etc/monitrc
@@ -25,7 +29,11 @@ COPY zabbix.conf.php /usr/share/zabbix/conf/zabbix.conf.php
 
 RUN \
   chmod 600 /etc/monitrc && \
-  sed -i -e 's/# php_value date\.timezone Europe\/Riga/php_value date\.timezone Asia\/Tokyo/g' /etc/apache2/conf-enabled/zabbix.conf
+  sed -i -e 's/# php_value date\.timezone Europe\/Riga/php_value date\.timezone Asia\/Tokyo/g' /etc/apache2/conf-enabled/zabbix.conf && \
+  sed -i -e 's/;allow_sign_up = true/allow_sign_up = false/g' /etc/grafana/grafana.ini && \
+  sed -i -e 's/;allow_org_create = true/allow_org_create = false/g' /etc/grafana/grafana.ini
 
-EXPOSE 80 2812 10050
+VOLUME ["/var/lib/mysql", "/var/lib/grafana"]
+
+EXPOSE 80 3000 10051
 CMD /root/start.sh
